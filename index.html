@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>מחשבון TPN</title>
+    <style>
+        :root { 
+            --dark-blue: #0f172a; --blue: #005fab; --green: #16a34a; --soft-green: #f0fdf4;
+            --red: #dc2626; --soft-red: #fef2f2; --bg: #f1f5f9; --border: #cbd5e1;
+            --res-green: #f0fdf4; --input-blue: #e0f2fe; --text-res-green: #15803d;
+        }
+        
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); padding: 5px; direction: rtl; margin: 0; color: #1e293b; font-size: 16px; }
+        .card { max-width: 500px; margin: auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 1px solid var(--border); overflow: hidden; }
+        
+        .header-fixed { background: var(--dark-blue); padding: 12px; text-align: center; color: white; }
+        .header-fixed h1 { margin: 0; font-size: 1.4em; font-weight: 800; }
+        
+        .weight-section { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; background: #fff; border-bottom: 1px solid #eee; }
+        .weight-input { width: 80px; height: 40px; border-radius: 8px; border: 2px solid var(--blue); text-align: center; font-size: 1.2em; font-weight: bold; }
+
+        .timing-box { background: var(--soft-green); border: 1px solid #dcfce7; border-radius: 10px; padding: 10px; margin: 5px; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; align-items: end; }
+        .input-group label { font-size: 0.85em; font-weight: 800; color: #1e293b; text-align: center; display: block; margin-bottom: 4px; }
+        
+        .stepper { display: flex; align-items: center; justify-content: center; background: white; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; height: 38px; }
+        .stepper button { width: 30px; height: 100%; border: none; background: #f8fafc; font-weight: bold; cursor: pointer; color: var(--blue); font-size: 1.2em; }
+        .stepper input { width: 100%; border: none; text-align: center; font-size: 1em; font-weight: 700; }
+        
+        .plain-input { height: 38px; border: 1px solid var(--border); border-radius: 6px; text-align: center; width: 100%; font-size: 1em; font-weight: 700; box-sizing: border-box; }
+
+        .fluid-summary { background: #eff6ff; margin: 5px; padding: 10px; border-radius: 8px; text-align: center; font-weight: 800; color: #1e40af; border: 1px solid #bfdbfe; font-size: 1em; }
+
+        .tpn-table { width: calc(100% - 10px); margin: 5px; border-collapse: separate; border-spacing: 0; border-radius: 10px; border: 1px solid var(--border); table-layout: fixed; overflow: hidden; }
+        .tpn-table td { padding: 8px 4px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; text-align: center; }
+        .col-label { width: 32%; background: #ffffff; text-align: right !important; padding-right: 8px !important; font-weight: 700; font-size: 0.9em; color: var(--blue); }
+        .col-input { width: 28%; background: var(--input-blue); }
+        .col-res { width: 40%; background: var(--res-green); border-right: 1px solid #d1fae5; white-space: nowrap; }
+
+        .val-main { font-weight: 800; color: var(--text-res-green); display: block; font-size: 1.1em; }
+        .val-sub { font-size: 0.8em; color: var(--text-res-green); display: block; }
+        .val-blue-box { background: #eff6ff; color: var(--blue); font-size: 0.72em; font-weight: 700; display: block; margin-top: 4px; padding: 2px; border-radius: 4px; border: 1px solid #dbeafe; }
+        .limit-red { color: var(--red) !important; font-weight: 900 !important; }
+
+        .fat-select { text-align-last: center; font-size: 0.85em !important; padding: 0 2px; }
+
+        .checklist-box { background: var(--soft-red); border: 1px solid #fecaca; border-radius: 8px; padding: 8px; margin: 5px; min-height: 40px; }
+        .alert-item { padding: 2px 0; font-size: 0.85em; font-weight: 800; color: var(--red); display: flex; align-items: center; gap: 4px; }
+        .alert-ok { color: var(--green); font-weight: 800; text-align: center; font-size: 1em; }
+
+        .extra-info { background: #fff; padding: 10px; margin: 5px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.85em; line-height: 1.4; }
+        .footer { text-align: center; padding: 12px; font-size: 0.8em; color: #64748b; border-top: 1px solid #f1f5f9; }
+        
+        .fat-toggle-container { display: flex; gap: 4px; justify-content: center; background: #e2e8f0; padding: 4px; border-radius: 8px; margin: 5px; }
+        .fat-toggle-container label { flex: 1; text-align: center; padding: 8px 2px; cursor: pointer; font-size: 0.85em; font-weight: 800; border-radius: 6px; background: white; border: 1px solid #cbd5e1; }
+        .fat-toggle-container input { display: none; }
+        .fat-toggle-container input:checked + label { background: var(--blue); color: white; border-color: var(--blue); }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="header-fixed"><h1>🧮 מחשבון TPN</h1></div>
+
+    <div class="weight-section">
+        <span>⚖️ משקל:</span>
+        <input type="number" id="w" class="weight-input" min="0" step="0.1" placeholder="-" oninput="calculate()">
+        <span>ק"ג</span>
+    </div>
+
+    <div class="timing-box">
+        <div class="grid">
+            <div class="input-group"><label>⏱️ קצב שקית</label><div class="stepper"><button type="button" onclick="step('rBag', -0.5)">-</button><input type="number" id="rBag" min="0" step="0.5" placeholder="-" oninput="sync('rBag', 'vBag')"><button type="button" onclick="step('rBag', 0.5)">+</button></div></div>
+            <div class="input-group"><label>🧴 נפח</label><input type="number" id="vBag" class="plain-input" min="0" placeholder="-" oninput="sync('vBag', 'rBag')"></div>
+            <div class="input-group"><label>🕒 שעות</label><div class="stepper"><button type="button" onclick="stepHours('h', -1)">-</button><input type="number" id="h" min="0" max="24" value="24" oninput="calculate()"><button type="button" onclick="stepHours('h', 1)">+</button></div></div>
+        </div>
+        <div id="fatTimingSection" class="grid" style="margin-top:10px;">
+            <div class="input-group"><label>⏱️ קצב שומן</label><div class="stepper"><button type="button" onclick="step('rFat', -0.1)">-</button><input type="number" id="rFat" min="0" step="0.1" placeholder="-" oninput="sync('rFat', 'vFat')"><button type="button" onclick="step('rFat', 0.1)">+</button></div></div>
+            <div class="input-group"><label>🥑 נפח שומן</label><input type="number" id="vFat" class="plain-input" min="0" step="0.1" placeholder="-" oninput="sync('vFat', 'rFat')"></div>
+            <div class="input-group"><label>🕒 שעות</label><div class="stepper"><button type="button" onclick="stepHours('hFat', -1)">-</button><input type="number" id="hFat" min="0" max="24" value="24" oninput="calculate()"><button type="button" onclick="stepHours('hFat', 1)">+</button></div></div>
+        </div>
+    </div>
+
+    <div id="fluidSummary" class="fluid-summary">הזינו נתונים...</div>
+
+    <div class="config-row" style="padding: 0 5px; margin-bottom: 5px;">
+        <select id="bagTemp" onchange="updateUI();" class="plain-input" style="height:45px; border:2px solid var(--blue); font-size:1.1em; width: 100%;">
+            <option value="" selected disabled>בחר תמיסה...</option>
+            <option value="custom">🛠️ מותאם (Custom)</option>
+            <option value="300-15" data-vol="300" data-dex="15" data-prot="9" data-kcal="189.6">🔴 AWT 300 | 15%</option>
+            <option value="500-12.5" data-vol="500" data-dex="12.5" data-prot="11.5" data-kcal="258.5">🟢 AWT 500 | 12.5%</option>
+            <option value="500-15" data-vol="500" data-dex="15" data-prot="15" data-kcal="315">🔴 AWT 500 | 15%</option>
+            <option value="1000-10" data-vol="1000" data-dex="10" data-prot="25" data-kcal="440">🔵 AWT 1000 | 10%</option>
+            <option value="1500-10" data-vol="1500" data-dex="10" data-prot="40" data-kcal="670">🔵 AWT 1500 | 10%</option>
+            <option value="1500-15" data-vol="1500" data-dex="15" data-prot="40" data-kcal="925">🔴 AWT 1500 | 15%</option>
+            <option value="2000-10" data-vol="2000" data-dex="10" data-prot="60" data-kcal="880">🔵 AWT 2000 | 10%</option>
+            <option value="2000-15" data-vol="2000" data-dex="15" data-prot="60" data-kcal="1260">🔴 AWT 2000 | 15%</option>
+        </select>
+        
+        <div id="fatSelectorArea" class="fat-toggle-container" style="display:none;">
+            <input type="radio" name="fm" id="fmSide" value="side" checked onchange="toggleFatMode()">
+            <label for="fmSide">🥑 שומן מהצד</label>
+            <input type="radio" name="fm" id="fmBag" value="inBag" onchange="toggleFatMode()">
+            <label for="fmBag">📦 שומן בשקית</label>
+        </div>
+    </div>
+
+    <div class="checklist-box" id="alertBox"><div class="alert-ok">✅ הכל תקין</div></div>
+
+    <table class="tpn-table">
+        <tr><td class="col-label">נפח שקית</td><td class="col-input"><input type="number" id="bVol" class="plain-input" min="0" oninput="calculate()"></td><td class="col-res" id="resVolInfo">-</td></tr>
+        <tr><td class="col-label">🧊 דקס (%)</td><td class="col-input"><input type="number" id="dexP" class="plain-input" step="0.1" min="0" oninput="calculate()"></td><td class="col-res" id="resGD">-</td></tr>
+        <tr><td class="col-label">🍖 חלבון (ג')</td><td class="col-input"><input type="number" id="protG" class="plain-input" step="0.1" min="0" oninput="calculate()"></td><td class="col-res" id="resProtKg">-</td></tr>
+        <tr>
+            <td class="col-label">🥑 בחירת שומן</td>
+            <td class="col-input" id="fatInputCell">
+                <select id="fConc" onchange="calculate()" class="plain-input fat-select">
+                    <option value="" selected disabled>בחר...</option>
+                    <option value="5">1:5 (20%) - ליפופונדין/סמופ</option>
+                    <option value="6">1:6 (16.6%) - מזרק סמופ</option>
+                    <option value="10">1:10 (10%) - אומגוון</option>
+                </select>
+            </td>
+            <td class="col-res" id="resFatKg">-</td>
+        </tr>
+        <tr style="border-top: 2px solid var(--blue);">
+            <td class="col-label">⚡ אנרגיה</td>
+            <td class="col-input" style="background:#fefce8;"><input type="number" id="bKcalInput" class="plain-input" disabled oninput="calculate()"></td>
+            <td class="col-res" id="resKcalKg">-</td>
+        </tr>
+    </table>
+
+    <div class="extra-info" id="extraInfo"></div>
+    <div class="footer">כל הזכויות שמורות לענת מסלנסקי - דיאטנית קלינית ©</div>
+</div>
+
+<script>
+    window.onload = function() { document.getElementById('bagTemp').selectedIndex = 0; };
+
+    function step(id, val) {
+        const el = document.getElementById(id);
+        el.value = (Math.max(0, (parseFloat(el.value) || 0) + val)).toFixed(1);
+        if(id === 'rBag') sync('rBag', 'vBag');
+        if(id === 'rFat') sync('rFat', 'vFat');
+    }
+
+    function stepHours(id, val) {
+        const el = document.getElementById(id);
+        el.value = Math.min(24, Math.max(0, (parseInt(el.value) || 0) + val));
+        calculate();
+    }
+
+    function sync(fromId, toId) {
+        const val = parseFloat(document.getElementById(fromId).value) || 0;
+        if (fromId.includes('r')) { 
+            document.getElementById(toId).value = (val * 24).toFixed(fromId === 'rFat' ? 1 : 0); 
+        } else { 
+            document.getElementById(toId).value = (val / 24).toFixed(1); 
+        }
+        calculate();
+    }
+
+    function toggleFatMode() {
+        const mode = document.querySelector('input[name="fm"]:checked').value;
+        const cell = document.getElementById('fatInputCell');
+        const fatTiming = document.getElementById('fatTimingSection');
+        if (mode === 'inBag') {
+            cell.innerHTML = `<input type="number" id="fatG_Manual" class="plain-input" placeholder="ג' שומן" oninput="calculate()">`;
+            fatTiming.style.opacity = '0.3'; fatTiming.style.pointerEvents = 'none';
+        } else {
+            cell.innerHTML = `
+                <select id="fConc" onchange="calculate()" class="plain-input fat-select">
+                    <option value="" selected disabled>בחר...</option>
+                    <option value="5">1:5 (20%) - ליפופונדין/סמופ</option>
+                    <option value="6">1:6 (16.6%) - מזרק סמופ</option>
+                    <option value="10">1:10 (10%) - אומגוון</option>
+                </select>`;
+            fatTiming.style.opacity = '1'; fatTiming.style.pointerEvents = 'auto';
+        }
+        calculate();
+    }
+
+    function updateUI() {
+        const type = document.getElementById('bagTemp').value;
+        const selector = document.getElementById('fatSelectorArea');
+        if (type === 'custom') {
+            ['bVol', 'dexP', 'protG', 'bKcalInput'].forEach(id => { const el = document.getElementById(id); el.value = ""; el.disabled = false; });
+            selector.style.display = 'flex';
+        } else {
+            const o = document.querySelector(`#bagTemp option[value="${type}"]`);
+            if(!o) return;
+            document.getElementById('bVol').value = o.dataset.vol;
+            document.getElementById('dexP').value = o.dataset.dex;
+            document.getElementById('protG').value = o.dataset.prot;
+            document.getElementById('bKcalInput').value = o.dataset.kcal;
+            ['bVol', 'dexP', 'protG', 'bKcalInput'].forEach(id => document.getElementById(id).disabled = true);
+            selector.style.display = 'none';
+            document.getElementById('fmSide').checked = true;
+            toggleFatMode();
+        }
+        calculate();
+    }
+
+    function calculate() {
+        const w = parseFloat(document.getElementById('w').value);
+        const vBag = parseFloat(document.getElementById('vBag').value) || 0;
+        const vFat = parseFloat(document.getElementById('vFat').value) || 0;
+        const bVolOrig = parseFloat(document.getElementById('bVol').value) || 1;
+        const h = parseFloat(document.getElementById('h').value) || 24;
+        const hF = parseFloat(document.getElementById('hFat').value) || 24;
+        const dexP = parseFloat(document.getElementById('dexP').value) || 0;
+        const pG = parseFloat(document.getElementById('protG').value) || 0;
+        const mode = document.querySelector('input[name="fm"]:checked')?.value || 'side';
+
+        let fatG = 0; let fConcVal = 0;
+        if (mode === 'inBag') { fatG = (parseFloat(document.getElementById('fatG_Manual')?.value) || 0) * (vBag / bVolOrig); } 
+        else { fConcVal = parseFloat(document.getElementById('fConc')?.value) || 0; fatG = fConcVal > 0 ? vFat / fConcVal : 0; }
+
+        const fatKcal = fatG * 10;
+        if (document.getElementById('bagTemp').value === 'custom') {
+            let baseKcal = (pG * 4) + ((dexP/100 * bVolOrig) * 3.4);
+            if (mode === 'inBag') baseKcal += (parseFloat(document.getElementById('fatG_Manual')?.value) || 0) * 10;
+            document.getElementById('bKcalInput').value = baseKcal.toFixed(1);
+        }
+
+        const totalVol = vBag + (mode === 'side' ? vFat : 0);
+        document.getElementById('fluidSummary').innerText = w && totalVol ? `נוזלים: ${totalVol.toFixed(1)} מ"ל | ${(totalVol/w).toFixed(1)} מ"ל/ק"ג` : "הזינו נתונים...";
+
+        if (!w || !vBag) { ['resVolInfo', 'resGD', 'resProtKg', 'resFatKg', 'resKcalKg'].forEach(id => document.getElementById(id).innerText = "-"); return; }
+
+        const ratio = vBag / bVolOrig;
+        const gluG = (dexP / 100 * bVolOrig) * ratio;
+        const protG = pG * ratio;
+        const bagKcalPart = (parseFloat(document.getElementById('bKcalInput').value) || 0) * ratio;
+        const totalKcal = mode === 'inBag' ? bagKcalPart : (bagKcalPart + fatKcal);
+
+        const gd = (gluG * 1000) / (w * 60 * h);
+        const fd = mode === 'side' ? fatG / (w * hF) : fatG / (w * h);
+        const fatKg = fatG / w;
+        const fatPerc = totalKcal > 0 ? (fatKcal / totalKcal) : 0;
+
+        document.getElementById('resVolInfo').innerHTML = `<span class="val-main">${vBag.toFixed(0)} מ"ל</span><span class="val-sub">(${(ratio*100).toFixed(0)}%)</span>`;
+        document.getElementById('resGD').innerHTML = `<span class="val-main">${gluG.toFixed(1)} ג'</span><span class="val-sub ${gd>12.01?'limit-red':''}">GD: ${gd.toFixed(1)}</span>`;
+        document.getElementById('resProtKg').innerHTML = `<span class="val-main">${protG.toFixed(1)} ג'</span><span class="val-sub">${(protG/w).toFixed(1)} ג'/ק"ג</span>`;
+        
+        let isFatKgAlert = (fConcVal === 10 && fatKg > 1.001); 
+        let isFatPercAlert = (fatPerc > 0.401); 
+        let isFdAlert = (fd > 0.1501); 
+        
+        document.getElementById('resFatKg').innerHTML = `<span class="val-main">${fatG.toFixed(1)} ג'</span><span class="val-sub ${isFatKgAlert ? 'limit-red' : ''}">${fatKg.toFixed(1)} ג'/ק"ג</span><span class="val-sub ${isFdAlert ? 'limit-red' : ''}" style="font-weight:600; margin-top:2px;">FD: ${fd.toFixed(3)}</span>`;
+        document.getElementById('resKcalKg').innerHTML = `<span class="val-main">${totalKcal.toFixed(0)} קק"ל</span><span class="val-sub">${(totalKcal/w).toFixed(1)}/ק"ג</span><span class="val-sub ${isFatPercAlert ? 'limit-red' : ''}" style="font-weight:700;">${(fatPerc*100).toFixed(0)}% שומן</span><span class="val-blue-box">שקית: ${(totalKcal - fatKcal).toFixed(0)} | שומן: ${fatKcal.toFixed(0)}</span>`;
+
+        const alerts = [];
+        if (gd > 12.01) alerts.push("חריגת גלוקוז (GD > 12)");
+        if (isFdAlert) alerts.push("חריגת קצב שומן (FD > 0.15)");
+        if (isFatKgAlert) alerts.push("חריגת אומגוון (> 1 ג'/ק\"ג)");
+        if (isFatPercAlert) alerts.push("חריגת שומן (> 40%)");
+        document.getElementById('alertBox').innerHTML = alerts.length ? alerts.map(a => `<div class="alert-item">⚠️ ${a}</div>`).join('') : `<div class="alert-ok">✅ הכל תקין</div>`;
+
+        let extraHtml = `<b>🕒 זמנים מינימליים להזנה:</b><br>שקית: <b>${((gluG*1000)/(w*60*12)).toFixed(1)} שעות</b>`;
+        if(mode==='side' && fatG>0) extraHtml += ` | שומן: <b>${(fatG/(w*0.15)).toFixed(1)} שעות</b>`;
+        
+        if (mode === 'side') {
+            let maxFatG = (fConcVal === 10) ? (w * 1) : (((totalKcal - fatKcal) * 0.4 / 0.6) / 10);
+            const maxVol = Math.floor(maxFatG * (fConcVal || 1));
+            let displayRate = Math.floor((maxVol / hF) * 10) / 10; 
+            extraHtml += `<div style="margin-top:8px; border-top:1px dashed #ccc; padding-top:5px;">⚙️ <b>קצב מקסימלי למתן 40% שומן (מלבד אומגוון)</b><br>נפח: <b>${maxVol} מ"ל</b> | קצב: <b>${displayRate.toFixed(1)} מ"ל/שעה</b></div>`;
+        }
+        document.getElementById('extraInfo').innerHTML = extraHtml;
+    }
+</script>
+</body>
+</html>

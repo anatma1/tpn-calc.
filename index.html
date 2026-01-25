@@ -256,6 +256,8 @@
         if (isFdAlert) alerts.push("חריגת קצב שומן (FD > 0.15)");
         if (isFatKgAlert) alerts.push("חריגת אומגוון (> 1 ג'/ק\"ג)");
         if (isFatPercAlert) alerts.push("חריגת שומן (> 40%)");
+        if (fConcVal === 6 && vFat > 60) alerts.push("אין לתת יותר מ-60 מ\"ל מזרק SMOF עם ויטמינים");
+        
         document.getElementById('alertBox').innerHTML = alerts.length ? alerts.map(a => `<div class="alert-item">⚠️ ${a}</div>`).join('') : `<div class="alert-ok">✅ הכל תקין</div>`;
 
         let extraHtml = `<b>🕒 זמנים מינימליים להזנה:</b><br>שקית: <b>${((gluG*1000)/(w*60*12)).toFixed(1)} שעות</b>`;

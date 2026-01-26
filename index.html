@@ -56,6 +56,9 @@
         .fat-toggle-container label { flex: 1; text-align: center; padding: 8px 2px; cursor: pointer; font-size: 0.85em; font-weight: 800; border-radius: 6px; background: white; border: 1px solid #cbd5e1; }
         .fat-toggle-container input { display: none; }
         .fat-toggle-container input:checked + label { background: var(--blue); color: white; border-color: var(--blue); }
+
+        .reset-btn { width: calc(100% - 10px); margin: 5px; padding: 12px; border: none; border-radius: 8px; background: #94a3b8; color: white; font-weight: 800; font-size: 1em; cursor: pointer; }
+        .reset-btn:active { background: #64748b; }
     </style>
 </head>
 <body>
@@ -131,12 +134,26 @@
         </tr>
     </table>
 
+    <button type="button" class="reset-btn" onclick="resetAll()">🔄 איפוס נתונים</button>
+
     <div class="extra-info" id="extraInfo"></div>
     <div class="footer">כל הזכויות שמורות לענת מסלנסקי - דיאטנית קלינית ©</div>
 </div>
 
 <script>
-    window.onload = function() { document.getElementById('bagTemp').selectedIndex = 0; };
+    window.onload = function() { resetAll(); };
+
+    function resetAll() {
+        const inputs = document.querySelectorAll('input[type="number"]');
+        inputs.forEach(i => {
+            if (i.id === 'h' || i.id === 'hFat') i.value = 24;
+            else i.value = "";
+        });
+        document.getElementById('bagTemp').selectedIndex = 0;
+        document.getElementById('fmSide').checked = true;
+        updateUI();
+        calculate();
+    }
 
     function step(id, val) {
         const el = document.getElementById(id);
@@ -189,7 +206,10 @@
             selector.style.display = 'flex';
         } else {
             const o = document.querySelector(`#bagTemp option[value="${type}"]`);
-            if(!o) return;
+            if(!o) {
+                ['bVol', 'dexP', 'protG', 'bKcalInput'].forEach(id => { document.getElementById(id).value = ""; });
+                return;
+            }
             document.getElementById('bVol').value = o.dataset.vol;
             document.getElementById('dexP').value = o.dataset.dex;
             document.getElementById('protG').value = o.dataset.prot;
@@ -214,20 +234,32 @@
         const mode = document.querySelector('input[name="fm"]:checked')?.value || 'side';
 
         let fatG = 0; let fConcVal = 0;
-        if (mode === 'inBag') { fatG = (parseFloat(document.getElementById('fatG_Manual')?.value) || 0) * (vBag / bVolOrig); } 
-        else { fConcVal = parseFloat(document.getElementById('fConc')?.value) || 0; fatG = fConcVal > 0 ? vFat / fConcVal : 0; }
+        const fatSelectEl = document.getElementById('fConc');
+        const fatManualEl = document.getElementById('fatG_Manual');
+
+        if (mode === 'inBag') { 
+            fatG = (parseFloat(fatManualEl?.value) || 0) * (vBag / bVolOrig); 
+        } else { 
+            fConcVal = parseFloat(fatSelectEl?.value) || 0; 
+            fatG = fConcVal > 0 ? vFat / fConcVal : 0; 
+        }
 
         const fatKcal = fatG * 10;
         if (document.getElementById('bagTemp').value === 'custom') {
             let baseKcal = (pG * 4) + ((dexP/100 * bVolOrig) * 3.4);
-            if (mode === 'inBag') baseKcal += (parseFloat(document.getElementById('fatG_Manual')?.value) || 0) * 10;
+            if (mode === 'inBag') baseKcal += (parseFloat(fatManualEl?.value) || 0) * 10;
             document.getElementById('bKcalInput').value = baseKcal.toFixed(1);
         }
 
         const totalVol = vBag + (mode === 'side' ? vFat : 0);
         document.getElementById('fluidSummary').innerText = w && totalVol ? `נוזלים: ${totalVol.toFixed(1)} מ"ל | ${(totalVol/w).toFixed(1)} מ"ל/ק"ג` : "הזינו נתונים...";
 
-        if (!w || !vBag) { ['resVolInfo', 'resGD', 'resProtKg', 'resFatKg', 'resKcalKg'].forEach(id => document.getElementById(id).innerText = "-"); return; }
+        if (!w || !vBag) { 
+            ['resVolInfo', 'resGD', 'resProtKg', 'resFatKg', 'resKcalKg'].forEach(id => document.getElementById(id).innerText = "-"); 
+            document.getElementById('alertBox').innerHTML = `<div class="alert-ok">בתיבת התראות: הזינו נתונים</div>`;
+            document.getElementById('extraInfo').innerHTML = "";
+            return; 
+        }
 
         const ratio = vBag / bVolOrig;
         const gluG = (dexP / 100 * bVolOrig) * ratio;
@@ -252,20 +284,26 @@
         document.getElementById('resKcalKg').innerHTML = `<span class="val-main">${totalKcal.toFixed(0)} קק"ל</span><span class="val-sub">${(totalKcal/w).toFixed(1)}/ק"ג</span><span class="val-sub ${isFatPercAlert ? 'limit-red' : ''}" style="font-weight:700;">${(fatPerc*100).toFixed(0)}% שומן</span><span class="val-blue-box">שקית: ${(totalKcal - fatKcal).toFixed(0)} | שומן: ${fatKcal.toFixed(0)}</span>`;
 
         const alerts = [];
-        if (gd > 12.01) alerts.push("חריגת גלוקוז (GD > 12)");
-        if (isFdAlert) alerts.push("חריגת קצב שומן (FD > 0.15)");
-        if (isFatKgAlert) alerts.push("חריגת אומגוון (> 1 ג'/ק\"ג)");
-        if (isFatPercAlert) alerts.push("חריגת שומן (> 40%)");
-        if (fConcVal === 6 && vFat > 60) alerts.push("אין לתת יותר מ-60 מ\"ל מזרק SMOF עם ויטמינים");
+        if (mode === 'side' && (!fatSelectEl || !fatSelectEl.value)) {
+            alerts.push("נא לבחור סוג שומן");
+        } else if (mode === 'inBag' && (!fatManualEl || !fatManualEl.value)) {
+            alerts.push("נא להזין כמות שומן בשקית");
+        } else {
+            if (gd > 12.01) alerts.push("חריגת גלוקוז (GD > 12)");
+            if (isFdAlert) alerts.push("חריגת קצב שומן (FD > 0.15)");
+            if (isFatKgAlert) alerts.push("חריגת אומגוון (> 1 ג'/ק\"ג)");
+            if (isFatPercAlert) alerts.push("חריגת שומן (> 40%)");
+            if (fConcVal === 6 && vFat > 60) alerts.push("אין לתת יותר מ-60 מ\"ל מזרק SMOF עם ויטמינים");
+        }
         
         document.getElementById('alertBox').innerHTML = alerts.length ? alerts.map(a => `<div class="alert-item">⚠️ ${a}</div>`).join('') : `<div class="alert-ok">✅ הכל תקין</div>`;
 
         let extraHtml = `<b>🕒 זמנים מינימליים להזנה:</b><br>שקית: <b>${((gluG*1000)/(w*60*12)).toFixed(1)} שעות</b>`;
         if(mode==='side' && fatG>0) extraHtml += ` | שומן: <b>${(fatG/(w*0.15)).toFixed(1)} שעות</b>`;
         
-        if (mode === 'side') {
+        if (mode === 'side' && fConcVal > 0) {
             let maxFatG = (fConcVal === 10) ? (w * 1) : (((totalKcal - fatKcal) * 0.4 / 0.6) / 10);
-            const maxVol = Math.floor(maxFatG * (fConcVal || 1));
+            const maxVol = Math.floor(maxFatG * fConcVal);
             let displayRate = Math.floor((maxVol / hF) * 10) / 10; 
             extraHtml += `<div style="margin-top:8px; border-top:1px dashed #ccc; padding-top:5px;">⚙️ <b>קצב מקסימלי למתן 40% שומן (מלבד אומגוון)</b><br>נפח: <b>${maxVol} מ"ל</b> | קצב: <b>${displayRate.toFixed(1)} מ"ל/שעה</b></div>`;
         }

@@ -40,7 +40,8 @@
 
         .val-main { font-weight: 800; color: var(--text-res-green); display: block; font-size: 1.1em; }
         .val-sub { font-size: 0.8em; color: var(--text-res-green); display: block; }
-        .val-blue-box { background: #eff6ff; color: var(--blue); font-size: 0.72em; font-weight: 700; display: block; margin-top: 4px; padding: 2px; border-radius: 4px; border: 1px solid #dbeafe; }
+        /* תיקון לנייד בתיבה הכחולה */
+        .val-blue-box { background: #eff6ff; color: var(--blue); font-size: 0.75em; font-weight: 700; display: flex; flex-direction: column; gap: 2px; margin-top: 4px; padding: 4px; border-radius: 4px; border: 1px solid #dbeafe; line-height: 1.2; }
         .limit-red { color: var(--red) !important; font-weight: 900 !important; }
 
         .fat-select { text-align-last: center; font-size: 0.85em !important; padding: 0 2px; }
@@ -281,7 +282,7 @@
         let isFdAlert = (fd > 0.1501); 
         
         document.getElementById('resFatKg').innerHTML = `<span class="val-main">${fatG.toFixed(1)} ג'</span><span class="val-sub ${isFatKgAlert ? 'limit-red' : ''}">${fatKg.toFixed(1)} ג'/ק"ג</span><span class="val-sub ${isFdAlert ? 'limit-red' : ''}" style="margin-top:2px;">FD: ${fd.toFixed(3)}</span>`;
-        document.getElementById('resKcalKg').innerHTML = `<span class="val-main">${totalKcal.toFixed(0)} קק"ל</span><span class="val-sub">${(totalKcal/w).toFixed(1)} קק"ל/ק"ג</span><span class="val-sub ${isFatPercAlert ? 'limit-red' : ''}" style="font-weight:700;">${(fatPerc*100).toFixed(0)}% שומן</span><span class="val-blue-box">שקית: ${(totalKcal - fatKcal).toFixed(0)} קק"ל | שומן: ${fatKcal.toFixed(0)} קק"ל</span>`;
+        document.getElementById('resKcalKg').innerHTML = `<span class="val-main">${totalKcal.toFixed(0)} קק"ל</span><span class="val-sub">${(totalKcal/w).toFixed(1)} קק"ל/ק"ג</span><span class="val-sub ${isFatPercAlert ? 'limit-red' : ''}" style="font-weight:700;">${(fatPerc*100).toFixed(0)}% שומן</span><div class="val-blue-box"><span>שקית: ${(totalKcal - fatKcal).toFixed(0)} קק"ל</span><span>שומן: ${fatKcal.toFixed(0)} קק"ל</span></div>`;
 
         const alerts = [];
         if (mode === 'side' && (!fatSelectEl || !fatSelectEl.value)) {

@@ -40,7 +40,6 @@
 
         .val-main { font-weight: 800; color: var(--text-res-green); display: block; font-size: 1.1em; }
         .val-sub { font-size: 0.8em; color: var(--text-res-green); display: block; font-weight: 700; }
-        /* עיצוב מותאם לנייד בתיבה הכחולה */
         .val-blue-box { background: #eff6ff; color: var(--blue); font-size: 0.75em; font-weight: 700; display: flex; flex-direction: column; gap: 2px; margin-top: 4px; padding: 4px; border-radius: 4px; border: 1px solid #dbeafe; line-height: 1.2; }
         .limit-red { color: var(--red) !important; font-weight: 900 !important; }
 
@@ -306,6 +305,15 @@
             if (isFatKgAlert) alerts.push("חריגת אומגוון (> 1 ג'/ק\"ג)");
             if (isFatPercAlert) alerts.push("חריגת שומן (> 40%)");
             if (fConcVal === 6 && vFat > 60) alerts.push("אין לתת יותר מ-60 מ\"ל מזרק SMOF עם ויטמינים");
+            
+            // בדיקת מגבלת נפח אומגוון
+            if (fConcVal === 10) {
+                if (w > 70) {
+                    if (vFat > 140) alerts.push("אין לתת יותר מ-140 מ\"ל אומגוון (למשקל > 70 ק\"ג)");
+                } else {
+                    if (vFat > 100) alerts.push("אין לתת יותר מ-100 מ\"ל אומגוון (כ-4 מ\"ל/שעה)");
+                }
+            }
         }
         
         document.getElementById('alertBox').innerHTML = alerts.length ? alerts.map(a => `<div class="alert-item">⚠️ ${a}</div>`).join('') : `<div class="alert-ok">✅ הכל תקין</div>`;

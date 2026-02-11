@@ -158,7 +158,7 @@
     function step(id, val) {
         const el = document.getElementById(id);
         let current = parseFloat(el.value) || 0;
-        let decimals = 2; // דיוק של 2 ספרות לקצב לפי בקשתך
+        let decimals = 2; 
         el.value = (Math.max(0, current + val)).toFixed(decimals);
         if(id === 'rBag') sync('rBag', 'vBag');
         if(id === 'rFat') sync('rFat', 'vFat');
@@ -174,16 +174,14 @@
         const val = parseFloat(document.getElementById(fromId).value) || 0;
         const isFat = fromId.toLowerCase().includes('fat'); 
         const hId = isFat ? 'hFat' : 'h';
-        // תיקון קריטי: לוקח את השעות מהשדה המתאים במקום 24 קבוע
         const hVal = parseFloat(document.getElementById(hId).value) || 24;
 
         if (fromId.includes('r')) { 
-            // Rate -> Volume (Rate * Hours)
+            // Rate -> Volume
             const decimals = isFat ? 1 : 0;
             document.getElementById(toId).value = (val * hVal).toFixed(decimals); 
         } else { 
-            // Volume -> Rate (Volume / Hours)
-            // שינוי ל-2 ספרות אחרי הנקודה לבקשת המשתמשת
+            // Volume -> Rate
             document.getElementById(toId).value = (val / hVal).toFixed(2); 
         }
         calculate();
@@ -306,8 +304,9 @@
             if (isFatPercAlert) alerts.push("חריגת שומן (> 40%)");
             if (fConcVal === 6 && vFat > 60) alerts.push("אין לתת יותר מ-60 מ\"ל מזרק SMOF עם ויטמינים");
             
-            // בדיקת מגבלת נפח אומגוון
+            // תוספות עבור אומגוון
             if (fConcVal === 10) {
+                alerts.push("לא לשכוח תוספת DEKA");
                 if (w > 70) {
                     if (vFat > 140) alerts.push("אין לתת יותר מ-140 מ\"ל אומגוון (למשקל > 70 ק\"ג)");
                 } else {
@@ -321,7 +320,6 @@
         let minBagH = (gluG*1000)/(w*60*12);
         let minFatH = (fatG/(w*0.15));
 
-        // הוספת העיגול מעלה בסוגריים כפי שביקשת
         let extraHtml = `<b>🕒 זמנים מינימליים להזנה:</b><br>שקית: <b>${minBagH.toFixed(1)} (${Math.ceil(minBagH)}) שעות</b>`;
         
         if(mode==='side' && fatG>0) {
@@ -329,23 +327,40 @@
         }
         
         if (mode === 'side' && fConcVal > 0) {
-            let maxFatG_ByPerc = (fConcVal === 10) ? (w * 1) : (((totalKcal - fatKcal) * 0.4 / 0.6) / 10);
-            let maxFatG_ByFD = 0.15 * w * hF;
-            
-            let finalMaxFatG;
-            let limitReason;
+            let maxVol = 0;
+            let displayRate = 0;
+            let limitReason = "";
 
-            if (maxFatG_ByPerc < maxFatG_ByFD) {
-                finalMaxFatG = maxFatG_ByPerc;
-                limitReason = "לפי מגבלת 40% שומן";
+            if (fConcVal === 10) {
+                // לוגיקה ייחודית לאומגוון
+                let maxByWeight = w * 10; // 1 ג'/ק"ג = 10 מ"ל לק"ג
+                let absoluteCap = (w > 70) ? 140 : 100;
+
+                if (maxByWeight < absoluteCap) {
+                    maxVol = Math.floor(maxByWeight);
+                    limitReason = "לפי 1 ג'/ק\"ג";
+                } else {
+                    maxVol = absoluteCap;
+                    limitReason = `לפי תקרת נפח (${absoluteCap} מ"ל)`;
+                }
             } else {
-                finalMaxFatG = maxFatG_ByFD;
-                limitReason = "לפי מגבלת FD 0.15";
+                // לוגיקה רגילה לשאר השומנים
+                let maxFatG_ByPerc = (((totalKcal - fatKcal) * 0.4 / 0.6) / 10);
+                let maxFatG_ByFD = 0.15 * w * hF;
+                
+                let finalMaxFatG;
+                if (maxFatG_ByPerc < maxFatG_ByFD) {
+                    finalMaxFatG = maxFatG_ByPerc;
+                    limitReason = "לפי מגבלת 40% שומן";
+                } else {
+                    finalMaxFatG = maxFatG_ByFD;
+                    limitReason = "לפי מגבלת FD 0.15";
+                }
+                maxVol = Math.floor(finalMaxFatG * fConcVal);
             }
             
-            const maxVol = Math.floor(finalMaxFatG * fConcVal);
-            let displayRate = Math.floor((maxVol / hF) * 10) / 10; 
-            extraHtml += `<div style="margin-top:8px; border-top:1px dashed #ccc; padding-top:5px;">⚙️ <b>קצב מקסימלי למתן שומן (${limitReason})</b><br>נפח: <b>${maxVol} מ"ל</b> | קצב: <b>${displayRate.toFixed(1)} מ"ל/שעה</b></div>`;
+            displayRate = Math.floor((maxVol / hF) * 10) / 10; 
+            extraHtml += `<div style="margin-top:8px; border-top:1px dashed #ccc; padding-top:5px;">⚙️ <b>קצב מקסימלי למתן שומן (${limitReason})</b><br>נפח: <b>${maxVol} מ"ל</b> | קצב: <b>${displayRate.toFixed(2)} מ"ל/שעה</b></div>`;
         }
         document.getElementById('extraInfo').innerHTML = extraHtml;
     }

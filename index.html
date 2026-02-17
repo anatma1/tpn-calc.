@@ -307,12 +307,15 @@
         document.getElementById('resGD').innerHTML = `<span class="val-main">${gluG.toFixed(1)} ג'</span><span class="val-sub ${gd>12.01?'limit-red':''}">GD: ${gd.toFixed(1)}</span>`;
         document.getElementById('resProtKg').innerHTML = `<span class="val-main">${protG.toFixed(1)} ג'</span><span class="val-sub">${(protG/w).toFixed(1)} ג'/ק"ג</span>`;
         
+        // תיקון סף ההתראה ל-40.05% והצגת אחוז שומן בדיוק של ספרה אחת
         let isFatKgAlert = (fConcVal === 10 && fatKg > 1.001); 
-        let isFatPercAlert = (fatPerc > 0.401); 
+        let isFatPercAlert = (fatPerc > 0.4005); 
         let isFdAlert = (fd > 0.1501); 
         
         document.getElementById('resFatKg').innerHTML = `<span class="val-main">${fatG.toFixed(1)} ג'</span><span class="val-sub ${isFatKgAlert ? 'limit-red' : ''}">${fatKg.toFixed(1)} ג'/ק"ג</span><span class="val-sub ${isFdAlert ? 'limit-red' : ''}" style="margin-top:2px;">FD: ${fd.toFixed(3)}</span>`;
-        document.getElementById('resKcalKg').innerHTML = `<span class="val-main">${totalKcal.toFixed(0)} קק"ל</span><span class="val-sub">${(totalKcal/w).toFixed(1)} קק"ל/ק"ג</span><span class="val-sub ${isFatPercAlert ? 'limit-red' : ''}" style="font-weight:700;">${(fatPerc*100).toFixed(0)}% שומן</span><div class="val-blue-box"><span>שקית: ${(totalKcal - fatKcal).toFixed(0)} קק"ל</span><span>שומן: ${fatKcal.toFixed(0)} קק"ל</span></div>`;
+        
+        // כאן בוצע השינוי: toFixed(1) במקום toFixed(0)
+        document.getElementById('resKcalKg').innerHTML = `<span class="val-main">${totalKcal.toFixed(0)} קק"ל</span><span class="val-sub">${(totalKcal/w).toFixed(1)} קק"ל/ק"ג</span><span class="val-sub ${isFatPercAlert ? 'limit-red' : ''}" style="font-weight:700;">${(fatPerc*100).toFixed(1)}% שומן</span><div class="val-blue-box"><span>שקית: ${(totalKcal - fatKcal).toFixed(0)} קק"ל</span><span>שומן: ${fatKcal.toFixed(0)} קק"ל</span></div>`;
 
         const alerts = [];
         if (mode === 'side' && (!fatSelectEl || !fatSelectEl.value)) {
